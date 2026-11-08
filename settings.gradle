@@ -1,0 +1,2 @@
+rootProject.name = "SquadLegends3D"
+include ':app'

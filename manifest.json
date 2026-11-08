@@ -1,0 +1,9 @@
+{
+  "name": "Squad Legends 3D: PS5 Edition",
+  "short_name": "SquadLegends3D",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#020617",
+  "theme_color": "#020617"
+}

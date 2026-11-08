@@ -1,0 +1,10 @@
+{
+  "name": "squad-legends-3d",
+  "version": "1.0.0",
+  "description": "Squad Legends 3D \u2014 PS5 Edition Low-Poly Brawler with Local Hotspot P2P Multiplayer",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 start_hotspot_server.py",
+    "android:build": "gradle assembleDebug"
+  }
+}
