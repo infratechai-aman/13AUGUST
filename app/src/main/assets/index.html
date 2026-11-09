@@ -464,9 +464,20 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Hide bulky 3-row dev header during combat on mobile / landscape */
-    body.in-combat #main-top-header {
-      display: none !important;
+    /* Hide bulky 3-row dev header during combat and on all mobile viewports */
+    body.in-combat #main-top-header,
+    @media screen and (max-height: 520px), screen and (max-width: 800px) {
+      #main-top-header {
+        display: none !important;
+      }
+    }
+
+    /* Prevent mobile gestures, zooming, selection and pull-to-refresh on game controls */
+    #combat-ui, #mobile-glass-joystick, .android-touch-btn, .move-btn, .ea-glass-combat-dock {
+      touch-action: none !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
     }
 
     /* Mobile Landscape Rotation Prompt Overlay */
@@ -5768,6 +5779,7 @@
     document.getElementById('btn-launch-selected-mode').addEventListener('click', () => {
       document.getElementById('game-menu-modal').classList.add('hidden');
       switchMode('combat');
+      tryLockLandscape();
     });
 
     document.querySelectorAll('.quick-mode-btn').forEach(btn => {
@@ -5863,8 +5875,31 @@
       });
     });
 
+    function bindGlassActionBtn(id, fn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let lastTrigger = 0;
+      const handler = (e) => {
+        if (e && e.cancelable && (e.type === 'pointerdown' || e.type === 'touchstart')) {
+          e.preventDefault();
+        }
+        const now = performance.now();
+        if (now - lastTrigger < 70) return;
+        lastTrigger = now;
+        fn();
+      };
+      el.addEventListener('pointerdown', handler);
+      el.addEventListener('touchstart', handler, { passive: false });
+      el.addEventListener('click', handler);
+    }
+
     bindGlassActionBtn('btn-jump', () => triggerPlayerJump());
     bindGlassActionBtn('btn-dodge', () => triggerDodgeRoll());
+    bindGlassActionBtn('btn-hero-special', () => triggerHeroExclusiveSpecial());
+    bindGlassActionBtn('btn-atk1', () => triggerHeroAttack('light1'));
+    bindGlassActionBtn('btn-atk2', () => triggerHeroAttack('heavy1'));
+    bindGlassActionBtn('btn-atk3', () => triggerHeroAttack('heavy2'));
+    bindGlassActionBtn('btn-atk4', () => triggerHeroAttack('ultimate'));
 
     const combatHudMenuBtn = document.getElementById('btn-combat-hud-menu');
     if (combatHudMenuBtn) combatHudMenuBtn.addEventListener('click', () => {
@@ -5880,29 +5915,17 @@
     if (forceLandscapeBtn) forceLandscapeBtn.addEventListener('click', toggleFullscreenAndLandscape);
 
     const defBtn = document.getElementById('btn-defend');
-    defBtn.addEventListener('pointerdown', e => { e.preventDefault(); setDefenceGuard(true); });
-    defBtn.addEventListener('pointerup', () => setDefenceGuard(false));
-    defBtn.addEventListener('pointerleave', () => setDefenceGuard(false));
-
-    const bindGlassActionBtn = (id, fn) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      let lastTrigger = 0;
-      const handler = (e) => {
-        if (e && e.type === 'pointerdown') e.preventDefault();
-        const now = performance.now();
-        if (now - lastTrigger < 90) return;
-        lastTrigger = now;
-        fn();
-      };
-      el.addEventListener('pointerdown', handler);
-      el.addEventListener('click', handler);
-    };
-    bindGlassActionBtn('btn-hero-special', () => triggerHeroExclusiveSpecial());
-    bindGlassActionBtn('btn-atk1', () => triggerHeroAttack('light1'));
-    bindGlassActionBtn('btn-atk2', () => triggerHeroAttack('heavy1'));
-    bindGlassActionBtn('btn-atk3', () => triggerHeroAttack('heavy2'));
-    bindGlassActionBtn('btn-atk4', () => triggerHeroAttack('ultimate'));
+    if (defBtn) {
+      const startDef = (e) => { if (e && e.cancelable) e.preventDefault(); setDefenceGuard(true); };
+      const stopDef = () => setDefenceGuard(false);
+      defBtn.addEventListener('pointerdown', startDef);
+      defBtn.addEventListener('touchstart', startDef, { passive: false });
+      defBtn.addEventListener('pointerup', stopDef);
+      defBtn.addEventListener('pointerleave', stopDef);
+      defBtn.addEventListener('pointercancel', stopDef);
+      defBtn.addEventListener('touchend', stopDef);
+      defBtn.addEventListener('touchcancel', stopDef);
+    }
 
     document.getElementById('btn-spawn-wave').addEventListener('click', () => {
       playerState.wave++;
@@ -5928,66 +5951,108 @@
 
     document.querySelectorAll('.move-btn').forEach(btn => {
       const dir = btn.dataset.move;
-      btn.addEventListener('pointerdown', e => {
-        e.preventDefault();
+      const activateDir = (e) => {
+        if (e && e.cancelable) e.preventDefault();
         touchMove[dir] = true;
         btn.classList.add('glass-dpad-active');
-      });
+      };
       const clearDir = () => {
         touchMove[dir] = false;
         btn.classList.remove('glass-dpad-active');
       };
+      btn.addEventListener('pointerdown', activateDir);
+      btn.addEventListener('touchstart', activateDir, { passive: false });
       btn.addEventListener('pointerup', clearDir);
       btn.addEventListener('pointercancel', clearDir);
       btn.addEventListener('pointerleave', clearDir);
+      btn.addEventListener('touchend', clearDir);
+      btn.addEventListener('touchcancel', clearDir);
     });
 
-    // 360-Degree Multi-Touch Analog Drag on #mobile-glass-joystick
+    // 360-Degree Multi-Touch & Pointer Analog Thumbstick on #mobile-glass-joystick
     const glassJoyEl = document.getElementById('mobile-glass-joystick');
     const stickNubEl = document.getElementById('mobile-stick-nub');
+    let joyActive = false;
     let joyPointerId = null;
+
     if (glassJoyEl) {
-      const updateJoyFromEvent = (e) => {
+      const updateJoyFromCoords = (clientX, clientY) => {
         const rect = glassJoyEl.getBoundingClientRect();
         const cx = rect.left + rect.width * 0.5;
         const cy = rect.top + rect.height * 0.5;
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
-        const maxR = rect.width * 0.36;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const maxR = rect.width * 0.38;
         const dist = Math.hypot(dx, dy);
         const clamped = Math.min(maxR, dist);
         const ang = Math.atan2(dy, dx);
         if (stickNubEl) {
-          const nx = Math.cos(ang) * clamped * 0.55;
-          const ny = Math.sin(ang) * clamped * 0.55;
+          const nx = Math.cos(ang) * clamped * 0.6;
+          const ny = Math.sin(ang) * clamped * 0.6;
           stickNubEl.style.transform = `translate(${nx.toFixed(1)}px, ${ny.toFixed(1)}px) scale(1.08)`;
         }
-        const deadzone = 10;
+        const deadzone = 8;
         touchMove.up = dy < -deadzone;
         touchMove.down = dy > deadzone;
         touchMove.left = dx < -deadzone;
         touchMove.right = dx > deadzone;
       };
+
       const resetJoy = () => {
+        joyActive = false;
         joyPointerId = null;
         touchMove.up = touchMove.down = touchMove.left = touchMove.right = false;
         if (stickNubEl) stickNubEl.style.transform = 'translate(0px, 0px) scale(1)';
       };
+
       glassJoyEl.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        joyActive = true;
         joyPointerId = e.pointerId;
         try { glassJoyEl.setPointerCapture(e.pointerId); } catch (err) {}
-        updateJoyFromEvent(e);
+        updateJoyFromCoords(e.clientX, e.clientY);
       });
-      glassJoyEl.addEventListener('pointermove', (e) => {
-        if (joyPointerId === e.pointerId) updateJoyFromEvent(e);
+      window.addEventListener('pointermove', (e) => {
+        if (joyActive && joyPointerId === e.pointerId) {
+          updateJoyFromCoords(e.clientX, e.clientY);
+        }
       });
-      glassJoyEl.addEventListener('pointerup', (e) => {
+      window.addEventListener('pointerup', (e) => {
         if (joyPointerId === e.pointerId) resetJoy();
       });
-      glassJoyEl.addEventListener('pointercancel', (e) => {
+      window.addEventListener('pointercancel', (e) => {
         if (joyPointerId === e.pointerId) resetJoy();
       });
+
+      // Direct touch support for mobile Safari & Chrome
+      glassJoyEl.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          if (e.cancelable) e.preventDefault();
+          joyActive = true;
+          const t = e.touches[0];
+          updateJoyFromCoords(t.clientX, t.clientY);
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if (joyActive && e.touches && e.touches.length > 0) {
+          for (let i = 0; i < e.touches.length; i++) {
+            const t = e.touches[i];
+            const rect = glassJoyEl.getBoundingClientRect();
+            if (t.clientX >= rect.left - 50 && t.clientX <= rect.right + 50 &&
+                t.clientY >= rect.top - 50 && t.clientY <= rect.bottom + 50) {
+              if (e.cancelable) e.preventDefault();
+              updateJoyFromCoords(t.clientX, t.clientY);
+              break;
+            }
+          }
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', (e) => {
+        if (!e.touches || e.touches.length === 0) resetJoy();
+      });
+      window.addEventListener('touchcancel', resetJoy);
     }
 
     // =========================================================================
