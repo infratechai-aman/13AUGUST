@@ -453,10 +453,132 @@
     .h-34 { height: 8.5rem; }
     .w-38 { width: 9.5rem; }
     .h-38 { height: 9.5rem; }
+
+    /* Mobile Landscape, Safe-Area & Touch Controls */
+    .safe-pad {
+      padding-top: max(4px, env(safe-area-inset-top));
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Hide bulky 3-row dev header during combat on mobile / landscape */
+    body.in-combat #main-top-header {
+      display: none !important;
+    }
+
+    /* Mobile Landscape Rotation Prompt Overlay */
+    #rotate-device-overlay {
+      display: none;
+    }
+    @media screen and (orientation: portrait) and (max-width: 900px) {
+      #rotate-device-overlay {
+        display: flex !important;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+      }
+    }
+    @keyframes phoneRotateAnim {
+      0%, 15% { transform: rotate(0deg); }
+      50%, 85% { transform: rotate(90deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .anim-rotate-phone {
+      animation: phoneRotateAnim 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Responsive scaling for mobile devices in landscape (height <= 520px) */
+    @media screen and (max-height: 520px) {
+      #hub-page-main {
+        top: 3.25rem !important;
+        bottom: 6.5rem !important;
+      }
+      #hub-page-main .ea-font-display {
+        font-size: 2.25rem !important;
+        line-height: 1.1 !important;
+      }
+      #lobby-squad-footer .w2k-strip-card {
+        height: 5rem !important;
+        border-radius: 16px !important;
+      }
+      #lobby-squad-footer .ea-font-display {
+        font-size: 1.1rem !important;
+      }
+      #game-menu-modal > .absolute.top-0 {
+        height: 2.75rem !important;
+      }
+      .ea-tab-btn {
+        padding: 0.2rem 0.55rem !important;
+        font-size: 0.72rem !important;
+      }
+      #c1-submodal-backdrop {
+        top: 2.75rem !important;
+      }
+      .ea-hud-plate {
+        padding: 0.35rem 0.55rem !important;
+        border-radius: 16px !important;
+      }
+      #mobile-glass-joystick {
+        width: 7.25rem !important;
+        height: 7.25rem !important;
+      }
+      .ea-glass-combat-dock {
+        padding: 0.35rem 0.55rem !important;
+        border-radius: 22px !important;
+      }
+      .android-touch-btn {
+        width: 2.65rem !important;
+        height: 2.65rem !important;
+      }
+      #btn-atk1 {
+        width: 4.1rem !important;
+        height: 4.1rem !important;
+      }
+      #btn-atk2, #btn-atk4 {
+        width: 3.1rem !important;
+        height: 3.1rem !important;
+      }
+      #btn-atk3 {
+        width: 2.9rem !important;
+        height: 2.9rem !important;
+      }
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,900&family=Teko:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="relative w-full h-full overflow-hidden">
+
+  <!-- ===================================================================== -->
+  <!-- MOBILE LANDSCAPE ROTATION PROMPT OVERLAY                              -->
+  <!-- ===================================================================== -->
+  <div id="rotate-device-overlay" class="hidden flex-col items-center justify-center p-6 text-center select-none bg-slate-950/98 backdrop-blur-2xl text-white">
+    <div class="relative mb-6">
+      <div class="w-22 h-22 rounded-3xl bg-gradient-to-br from-red-600/30 to-amber-500/20 border-2 border-red-500/60 flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.4)]">
+        <svg class="w-12 h-12 text-white anim-rotate-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      </div>
+      <div class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full bg-red-600 text-[10px] font-black uppercase tracking-wider shadow">
+        3D COMBAT
+      </div>
+    </div>
+    <div class="ea-font-condensed text-xs font-black text-red-500 tracking-[0.3em] mb-1">
+      SQUAD LEGENDS // MOBILE CONTROLS
+    </div>
+    <h2 class="ea-font-display text-3xl sm:text-4xl font-black italic tracking-wide text-white mb-2">
+      ROTATE TO LANDSCAPE
+    </h2>
+    <p class="ea-font-condensed text-sm sm:text-base text-slate-300 max-w-sm mb-6 leading-relaxed">
+      Please rotate your device to <strong class="text-amber-400">Landscape Mode</strong> for full 3D arena view, on-screen analog joystick & combat action deck!
+    </p>
+    <button id="btn-force-landscape-fs" class="px-6 py-3 rounded-full bg-gradient-to-r from-red-600 to-amber-500 hover:brightness-110 text-white ea-font-condensed font-black text-sm uppercase tracking-widest shadow-[0_0_30px_rgba(239,68,68,0.5)] transition">
+      ⛶ Enter Fullscreen & Rotate
+    </button>
+  </div>
 
   <!-- 3D WebGL Viewport -->
   <div id="canvas-container"></div>
@@ -772,13 +894,13 @@
       <!-- =================================================================== -->
     <!-- EA SPORTS / 2K BROADCAST IN-GAME COMBAT OVERLAY                     -->
     <!-- =================================================================== -->
-    <div id="combat-ui" class="hidden flex-1 flex flex-col justify-between p-2.5 sm:p-4 pointer-events-none">
+    <div id="combat-ui" class="hidden fixed inset-0 z-30 flex flex-col justify-between p-2 sm:p-3 pointer-events-none select-none overflow-hidden safe-pad">
 
-      <!-- TOP ROW: Fighter Broadcast Plate (Left), TV Scorebug (Center), Tactical Radar (Right) -->
-      <div class="flex flex-wrap items-start justify-between gap-2">
+      <!-- TOP ROW: Fighter Broadcast Plate (Left), TV Scorebug (Center), Fast Action Pill & Radar (Right) -->
+      <div class="flex items-start justify-between gap-1.5 sm:gap-2 w-full">
 
         <!-- Left: EA UFC / 2K Fighter Broadcast Plate -->
-        <div class="pointer-events-auto ea-hud-plate rounded-r-xl p-3 w-72 sm:w-80">
+        <div class="pointer-events-auto ea-hud-plate rounded-xl p-2 sm:p-3 w-56 sm:w-72 md:w-80 shrink-0">
           <div class="flex items-center justify-between gap-2 mb-2">
             <div class="flex items-center gap-2.5">
               <!-- 2K OVR Rating Badge -->
@@ -884,7 +1006,7 @@
             <button data-bmode="armyclash" class="quick-mode-btn ea-font-condensed px-2 py-0.5 rounded-sm bg-amber-400 text-slate-950 text-[10px] font-black transition">🚩 Army Clash</button>
           </div>
 
-          <div class="flex flex-wrap justify-center gap-1.5 mt-1.5">
+          <div class="hidden lg:flex flex-wrap justify-center gap-1.5 mt-1.5">
             <button id="btn-spawn-wave" class="ea-font-condensed px-2.5 py-0.5 rounded-sm bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-sky-300 border border-slate-700 transition">
               + Spawn Ultron Squad
             </button>
@@ -909,10 +1031,24 @@
           </div>
         </div>
 
-        <!-- Right: Broadcast Radar Module -->
-        <div class="pointer-events-auto ea-hud-plate rounded-l-xl p-2 hidden md:flex flex-col items-center border-l-0 border-r-4 border-r-sky-400">
-          <div class="ea-font-condensed text-[10px] font-black uppercase tracking-widest text-sky-400 mb-1">ARENA RADAR</div>
-          <canvas id="radar-canvas" width="104" height="104" class="rounded-full bg-slate-950/95 border border-sky-500/40"></canvas>
+        <!-- Right: Mobile Fast Action Pill (Menu, Camera, BGM, Fullscreen) + Optional Radar -->
+        <div class="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0 self-start">
+          <button id="btn-combat-hud-menu" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 ea-font-condensed font-black text-[11px] sm:text-xs shadow-lg uppercase tracking-wider transition">
+            ☰ MENU
+          </button>
+          <button id="btn-combat-hud-cam" class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-white border border-slate-700 ea-font-condensed font-bold text-[11px] sm:text-xs shadow transition">
+            🎥 CAM
+          </button>
+          <button id="btn-combat-hud-bgm" class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-400/50 ea-font-condensed font-bold text-[11px] sm:text-xs shadow transition">
+            🎵 BGM
+          </button>
+          <button id="btn-combat-hud-fs" class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 border border-sky-400/50 ea-font-condensed font-bold text-[11px] sm:text-xs shadow transition" title="Toggle Landscape Fullscreen">
+            ⛶
+          </button>
+          <!-- Broadcast Radar Module for Large Screens -->
+          <div class="ea-hud-plate rounded-xl p-1.5 hidden xl:flex flex-col items-center border border-sky-400/40">
+            <canvas id="radar-canvas" width="84" height="84" class="rounded-full bg-slate-950/95 border border-sky-500/40"></canvas>
+          </div>
         </div>
       </div>
 
@@ -1059,36 +1195,36 @@
     <!-- ================================================================= -->
     <!-- TOP NAVIGATION HEADER (Only Real Working Pages — No Fake Coins!)  -->
     <!-- ================================================================= -->
-    <div class="absolute top-0 inset-x-0 h-13 px-3 sm:px-6 flex items-center justify-between bg-gradient-to-b from-black/95 via-black/85 to-transparent border-b border-red-500/40 z-40 pointer-events-auto">
-      <div class="flex items-center gap-2 sm:gap-5">
-        <div id="btn-brand-home" class="w2k-crimson-ribbon px-4 py-1 pr-8 cursor-pointer">
-          <span class="ea-font-condensed text-sm sm:text-base font-black text-white tracking-[0.18em]">SQUAD LEGENDS</span>
+    <div class="absolute top-0 inset-x-0 h-11 sm:h-13 px-2 sm:px-6 flex items-center justify-between bg-gradient-to-b from-black/95 via-black/85 to-transparent border-b border-red-500/40 z-40 pointer-events-auto">
+      <div class="flex items-center gap-1.5 sm:gap-4 overflow-hidden">
+        <div id="btn-brand-home" class="w2k-crimson-ribbon px-2.5 sm:px-4 py-0.5 sm:py-1 pr-3 sm:pr-6 cursor-pointer shrink-0">
+          <span class="ea-font-condensed text-xs sm:text-base font-black text-white tracking-[0.16em] whitespace-nowrap">SQUAD LEGENDS</span>
         </div>
 
-        <nav class="flex items-center gap-1">
-          <button data-hubpage="lobby" class="hub-nav-btn ea-tab-btn ea-tab-active text-xs sm:text-sm">HOME</button>
-          <button data-hubpage="playmodes" class="hub-nav-btn ea-tab-btn text-xs sm:text-sm">GAME MODES</button>
-          <button data-hubpage="characters" class="hub-nav-btn ea-tab-btn text-xs sm:text-sm">FIGHTERS</button>
-          <button data-hubpage="missions" class="hub-nav-btn ea-tab-btn text-xs sm:text-sm">ARENAS (6 MAPS)</button>
-          <button data-hubpage="settings" class="hub-nav-btn ea-tab-btn text-xs sm:text-sm">SETTINGS</button>
+        <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap py-0.5">
+          <button data-hubpage="lobby" class="hub-nav-btn ea-tab-btn ea-tab-active text-[11px] sm:text-xs md:text-sm whitespace-nowrap">HOME</button>
+          <button data-hubpage="playmodes" class="hub-nav-btn ea-tab-btn text-[11px] sm:text-xs md:text-sm whitespace-nowrap">GAME MODES</button>
+          <button data-hubpage="characters" class="hub-nav-btn ea-tab-btn text-[11px] sm:text-xs md:text-sm whitespace-nowrap">FIGHTERS</button>
+          <button data-hubpage="missions" class="hub-nav-btn ea-tab-btn text-[11px] sm:text-xs md:text-sm whitespace-nowrap">ARENAS (6 MAPS)</button>
+          <button data-hubpage="settings" class="hub-nav-btn ea-tab-btn text-[11px] sm:text-xs md:text-sm whitespace-nowrap">SETTINGS</button>
         </nav>
       </div>
 
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <button id="btn-bgm-menu" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/60 ea-font-condensed text-xs font-black text-amber-300">
-          🎵 BGM: ENDGAME TRAP [M]
+      <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
+        <button id="btn-bgm-menu" class="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/60 ea-font-condensed text-[11px] sm:text-xs font-black text-amber-300 whitespace-nowrap">
+          🎵 BGM [M]
         </button>
-        <button id="btn-bgm-next-menu" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 ea-font-condensed text-xs font-bold text-sky-300" title="Next Non-Copyrighted Song [N]">
-          ⏭ NEXT [N]
+        <button id="btn-bgm-next-menu" class="hidden md:inline-block px-2 py-0.5 sm:py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 ea-font-condensed text-[11px] sm:text-xs font-bold text-sky-300" title="Next Non-Copyrighted Song [N]">
+          ⏭ NEXT
         </button>
-        <label class="hidden sm:inline-block px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-emerald-500/50 ea-font-condensed text-xs font-bold text-emerald-300 cursor-pointer" title="Load Custom MP3 Song">
+        <label class="hidden lg:inline-block px-2 py-0.5 sm:py-1 bg-slate-900 hover:bg-slate-800 border border-emerald-500/50 ea-font-condensed text-[11px] sm:text-xs font-bold text-emerald-300 cursor-pointer" title="Load Custom MP3 Song">
           📂 MP3
           <input id="input-custom-mp3-menu" type="file" accept="audio/*" class="hidden" />
         </label>
-        <button id="btn-replay-loading" class="hidden lg:inline-block px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 ea-font-condensed text-xs font-bold text-slate-300">
+        <button id="btn-replay-loading" class="hidden 2xl:inline-block px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 ea-font-condensed text-xs font-bold text-slate-300">
           ⏳ Loading Screen
         </button>
-        <button id="btn-resume-game" class="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white ea-font-condensed text-xs font-black uppercase tracking-wider shadow-lg transition">
+        <button id="btn-resume-game" class="px-3 sm:px-4 py-1 sm:py-1.5 bg-red-600 hover:bg-red-500 text-white ea-font-condensed text-[11px] sm:text-xs font-black uppercase tracking-wider shadow-lg transition whitespace-nowrap">
           ▶ Resume Fight
         </button>
       </div>
@@ -1097,22 +1233,22 @@
     <!-- ================================================================= -->
     <!-- SCREEN 1: HOME LOBBY (Original Title + 3D Superstar + 4 Real Cards)-->
     <!-- ================================================================= -->
-    <div id="hub-page-main" class="absolute left-6 sm:left-12 top-20 bottom-44 flex flex-col justify-center z-20 pointer-events-auto max-w-md">
-      <div class="ea-font-condensed text-xs font-black text-red-500 tracking-[0.28em] mb-1">3D ACTION BRAWLER</div>
-      <div class="ea-font-display text-6xl sm:text-8xl font-bold italic tracking-tight text-white leading-none drop-shadow-[0_8px_28px_rgba(0,0,0,0.95)]">
+    <div id="hub-page-main" class="absolute left-4 sm:left-12 top-13 sm:top-20 bottom-24 sm:bottom-44 flex flex-col justify-center z-20 pointer-events-auto max-w-sm sm:max-w-md">
+      <div class="ea-font-condensed text-[10px] sm:text-xs font-black text-red-500 tracking-[0.28em] mb-0.5 sm:mb-1">3D ACTION BRAWLER</div>
+      <div class="ea-font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold italic tracking-tight text-white leading-none drop-shadow-[0_8px_28px_rgba(0,0,0,0.95)]">
         SQUAD <span class="text-red-600">LEGENDS</span>
       </div>
-      <div class="w-44 h-1.5 bg-gradient-to-r from-red-600 to-transparent mt-1 mb-2.5"></div>
-      <div id="w2k-home-superstar-tag" class="ea-font-condensed text-sm sm:text-base font-black text-slate-200 tracking-[0.2em] uppercase">
+      <div class="w-28 sm:w-44 h-1 sm:h-1.5 bg-gradient-to-r from-red-600 to-transparent mt-0.5 mb-1.5 sm:mb-2.5"></div>
+      <div id="w2k-home-superstar-tag" class="ea-font-condensed text-xs sm:text-base font-black text-slate-200 tracking-[0.16em] uppercase">
         ACTIVE FIGHTER // AMAN (99 OVR)
       </div>
 
       <!-- Instant 1-Tap Fighter Switcher Under Logo -->
-      <div class="flex items-center gap-1.5 mt-3">
-        <button data-p1hero="thor" class="menu-p1-btn px-3 py-1 bg-red-600 text-white ea-font-condensed text-xs font-black tracking-wider border border-white/40">AMAN</button>
-        <button data-p1hero="ironman" class="menu-p1-btn px-3 py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">MOHSIN</button>
-        <button data-p1hero="spiderman" class="menu-p1-btn px-3 py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">AWEZ</button>
-        <button data-p1hero="cap" class="menu-p1-btn px-3 py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">HUSSAIN</button>
+      <div class="flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-3">
+        <button data-p1hero="thor" class="menu-p1-btn px-2.5 sm:px-3 py-0.5 sm:py-1 bg-red-600 text-white ea-font-condensed text-xs font-black tracking-wider border border-white/40">AMAN</button>
+        <button data-p1hero="ironman" class="menu-p1-btn px-2.5 sm:px-3 py-0.5 sm:py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">MOHSIN</button>
+        <button data-p1hero="spiderman" class="menu-p1-btn px-2.5 sm:px-3 py-0.5 sm:py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">AWEZ</button>
+        <button data-p1hero="cap" class="menu-p1-btn px-2.5 sm:px-3 py-0.5 sm:py-1 bg-slate-900/90 text-slate-300 ea-font-condensed text-xs font-bold tracking-wider border border-slate-700 hover:border-white">HUSSAIN</button>
       </div>
     </div>
 
@@ -1166,12 +1302,12 @@
     <!-- ================================================================= -->
     <!-- SUB-PAGES CONTAINER (Clean, Self-Contained, Zero Background Leak) -->
     <!-- ================================================================= -->
-    <div id="c1-submodal-backdrop" class="hidden absolute inset-0 top-13 z-30 flex flex-col justify-between overflow-y-auto pointer-events-auto">
+    <div id="c1-submodal-backdrop" class="hidden absolute inset-0 top-11 sm:top-13 z-30 flex flex-col justify-between overflow-y-auto pointer-events-auto">
 
       <!-- =============================================================== -->
       <!-- SCREEN 2: REDESIGNED GAME MODE SELECTION (Clean 6-Card Grid!)   -->
       <!-- =============================================================== -->
-      <div id="hub-page-playmodes" class="w-full h-full flex flex-col justify-between pt-5 pb-4 px-4 sm:px-6 bg-slate-950/92 backdrop-blur-xl overflow-y-auto">
+      <div id="hub-page-playmodes" class="w-full h-full flex flex-col justify-between pt-14 sm:pt-16 pb-6 px-3 sm:px-6 bg-slate-950/92 backdrop-blur-xl overflow-y-auto no-scrollbar">
         <!-- Top Fighter Matchup & Launch Bar (Curved Apple/Gemini Glass Pill Bar + Multiplayer Room Hub!) -->
         <div class="w-full max-w-6xl mx-auto flex flex-col gap-2.5 mt-2">
           <div class="w-full flex flex-wrap items-center justify-between gap-3 bg-slate-900/85 backdrop-blur-2xl border border-white/15 px-5 py-3 rounded-3xl shadow-2xl">
@@ -1300,7 +1436,7 @@
       <!-- =============================================================== -->
       <!-- SCREEN 3: FIGHTERS (NBA 2K Portrait Tiles — Fixed Box Clutter!) -->
       <!-- =============================================================== -->
-      <div id="hub-page-characters" class="hidden w-full h-full nba2k-bg-shards relative flex flex-col justify-between p-4 sm:p-7 pointer-events-none">
+      <div id="hub-page-characters" class="hidden w-full h-full nba2k-bg-shards relative flex flex-col justify-between pt-14 sm:pt-16 pb-6 px-3 sm:px-7 overflow-y-auto pointer-events-auto">
         <div class="flex items-center justify-between pointer-events-auto">
           <button data-hubpage="lobby" class="hub-nav-btn px-3 py-1 bg-black/80 border border-slate-600 text-white ea-font-condensed text-xs font-black uppercase">
             ← Back to Home
@@ -1398,7 +1534,7 @@
       <!-- =============================================================== -->
       <!-- SCREEN 4: 6 PLAYABLE 3D ARENAS (Direct Map Selection!)          -->
       <!-- =============================================================== -->
-      <div id="hub-page-missions" class="hidden w-full max-w-5xl mx-auto my-auto c3-panel p-5">
+      <div id="hub-page-missions" class="hidden w-full max-w-5xl mx-auto my-auto c3-panel p-4 sm:p-6 overflow-y-auto">
         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
           <div>
             <div class="ea-font-condensed text-xs font-black text-amber-400 tracking-widest">6 PLAYABLE 3D ENVIRONMENTS</div>
@@ -1443,7 +1579,7 @@
       <!-- =============================================================== -->
       <!-- SCREEN 5: APPLE / GEMINI CURVED GLASS SETTINGS STUDIO           -->
       <!-- =============================================================== -->
-      <div id="hub-page-settings" class="hidden w-full max-w-4xl mx-auto my-auto c3-panel p-6 sm:p-8 space-y-6">
+      <div id="hub-page-settings" class="hidden w-full max-w-4xl mx-auto my-auto c3-panel p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
           <div>
             <div class="ea-font-condensed text-xs font-black text-sky-400 tracking-[0.22em] uppercase">SYSTEM PREFERENCES // ANDROID APK & WEB</div>
@@ -5401,6 +5537,7 @@
       const badge = document.getElementById('phase-badge');
 
       if (newMode === 'studio' || newMode === 'env') {
+        document.body.classList.remove('in-combat');
         studioUI.classList.remove('hidden');
         combatUI.classList.add('hidden');
         clearAllBattleUnits();
@@ -5414,11 +5551,13 @@
         }
         badge.textContent = newMode === 'studio' ? 'Phase 1: Hero & Weapon Studio' : 'Phase 1: Destructible Arena Preview';
       } else if (newMode === 'combat') {
+        document.body.classList.add('in-combat');
         studioUI.classList.add('hidden');
         combatUI.classList.remove('hidden');
         badge.textContent = '1v1 • 2P PvP • 2v2 • Army Clash Ready';
         restoreHeldWeaponsVisibility('all');
         spawnBattleByMode(currentBattleMode);
+        tryLockLandscape();
       }
     }
 
@@ -5491,22 +5630,52 @@
         }
       }
 
-      if (k === ' ') {
-        if (playerState.isGrounded) {
-          playerState.isGrounded = false;
-          if (activeHeroId === 'thor') {
-            playerState.velY = 14.8;
-            const forward = new THREE.Vector3(Math.sin(playerState.yaw), 0, Math.cos(playerState.yaw)).normalize();
-            playerState.vel.copy(forward).multiplyScalar(23.0);
-            playerState.targetFov = 58;
-            SFX.play('thunder');
-            spawnShockwaveRing(playerState.pos, 0x38bdf8, 5.5, 0.35);
-            spawnFloatingDamage(playerState.pos, '⚡ THOR SUPER LONG LEAP!', 'text-sky-300 text-xs');
-          } else {
-            playerState.velY = 11.8;
-            SFX.play('swing');
-          }
+
+    function triggerPlayerJump() {
+      if (playerState.isGrounded) {
+        playerState.isGrounded = false;
+        if (activeHeroId === 'thor') {
+          playerState.velY = 14.8;
+          const forward = new THREE.Vector3(Math.sin(playerState.yaw), 0, Math.cos(playerState.yaw)).normalize();
+          playerState.vel.copy(forward).multiplyScalar(23.0);
+          playerState.targetFov = 58;
+          SFX.play('thunder');
+          spawnShockwaveRing(playerState.pos, 0x38bdf8, 5.5, 0.35);
+          spawnFloatingDamage(playerState.pos, '⚡ THOR SUPER LONG LEAP!', 'text-sky-300 text-xs');
+        } else {
+          playerState.velY = 11.8;
+          SFX.play('swing');
         }
+      }
+    }
+
+    function tryLockLandscape() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (err) {}
+    }
+
+    function toggleFullscreenAndLandscape() {
+      const doc = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (doc.requestFullscreen) {
+          doc.requestFullscreen().then(() => tryLockLandscape()).catch(() => tryLockLandscape());
+        } else if (doc.webkitRequestFullscreen) {
+          doc.webkitRequestFullscreen();
+          tryLockLandscape();
+        } else {
+          tryLockLandscape();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    }
+      if (k === ' ') {
+        triggerPlayerJump();
       }
     });
 
@@ -5558,6 +5727,8 @@
     });
     document.getElementById('btn-resume-game').addEventListener('click', () => {
       document.getElementById('game-menu-modal').classList.add('hidden');
+      switchMode('combat');
+      tryLockLandscape();
     });
 
     document.querySelectorAll('.menu-mode-card').forEach(card => {
@@ -5692,10 +5863,21 @@
       });
     });
 
-    document.getElementById('btn-jump').addEventListener('click', () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    bindGlassActionBtn('btn-jump', () => triggerPlayerJump());
+    bindGlassActionBtn('btn-dodge', () => triggerDodgeRoll());
+
+    const combatHudMenuBtn = document.getElementById('btn-combat-hud-menu');
+    if (combatHudMenuBtn) combatHudMenuBtn.addEventListener('click', () => {
+      document.getElementById('game-menu-modal').classList.toggle('hidden');
     });
-    document.getElementById('btn-dodge').addEventListener('click', () => triggerDodgeRoll());
+    const combatHudCamBtn = document.getElementById('btn-combat-hud-cam');
+    if (combatHudCamBtn) combatHudCamBtn.addEventListener('click', toggleTppCameraMode);
+    const combatHudBgmBtn = document.getElementById('btn-combat-hud-bgm');
+    if (combatHudBgmBtn) combatHudBgmBtn.addEventListener('click', () => BGM.toggle());
+    const combatHudFsBtn = document.getElementById('btn-combat-hud-fs');
+    if (combatHudFsBtn) combatHudFsBtn.addEventListener('click', toggleFullscreenAndLandscape);
+    const forceLandscapeBtn = document.getElementById('btn-force-landscape-fs');
+    if (forceLandscapeBtn) forceLandscapeBtn.addEventListener('click', toggleFullscreenAndLandscape);
 
     const defBtn = document.getElementById('btn-defend');
     defBtn.addEventListener('pointerdown', e => { e.preventDefault(); setDefenceGuard(true); });
